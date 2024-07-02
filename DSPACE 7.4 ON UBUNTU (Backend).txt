@@ -1,0 +1,136 @@
+DSPACE 7 BACKEND & REST API INSTALLATION
+Update and upgrade
+sudo apt-get update
+sudo apt-get upgrade
+
+Install Git
+sudo apt-get install git
+git --version
+sudo add-apt-repository ppa:git-core/ppa
+sudo apt update; apt install git
+
+Install OpenJDK 11, Apache Ant, Apache Maven, and PostgreSQL 11
+sudo apt install openjdk-11-jdk ant maven
+
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+echo "deb http://apt.postgresql.org/pub/repos/apt/jammy" -pgdg main | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+sudo apt-get update
+
+sudo apt-get install postgresql postgresql-client postgresql-contrib libpostgresql-jdbc-java -y
+
+psql -V psql
+
+Configure Dspace database, pgcrypto extension in PostgreSQL
+sudo su postgres
+cd /etc/postgresql/14/main
+createuser --username=postgres --no-superuser --pwprompt dspace
+createdb --username=postgres --owner=dspace --encoding=UNICODE -T template0 dspace
+psql --username=postgres dspace -c "CREATE EXTENSION pgcrypto;"
+exit
+
+Allow Dspace on localhost
+sudo nano /etc/postgresql/14/main/pg_hba.conf
+local all dspace md5
+sudo /etc/init.d/postgresql restart
+
+Configure Dspace User and Password
+sudo useradd -m dspace
+sudo passwd dspace
+
+Create Dspace Directory and change ownership
+sudo mkdir /dspace
+sudo chown dspace /dspace
+
+
+Create Dspace Build Directory and set the read, write and execute permissions for everyone
+sudo mkdir /build
+sudo chmod -R 777 /build
+
+Create solr directory in opt and change the directory owner to Dspace user
+sudo mkdir /opt/solr-8.11
+cd /opt/solr-8.11
+sudo chown -R dspace:dspace /opt/solr-8.11
+wget -c https://downloads.apache.org/lucene/solr/8.11.2/solr-8.11.2.tgz
+tar xvf solr-8.11.2.tgz
+cp -rf /opt/solr-8.11/solr-8.11.2/* /opt/solr-8.11/
+rm -rf solr-8.11.2 solr-8.11.2.tgz
+/opt/solr-8.11/bin/solr start -force
+/opt/solr-8.11/bin/ solr status
+http://localhost:8983/solr
+exit
+
+Download and extract Dspace sources in build directory
+cd /build
+wget https://github.com/DSpace/DSpace/archive/refs/tags/dspace-7.4.tar.gz
+tar xvzf dspace-7.4.tar.gz 	OR	gunzip -c dspace-7.4.tar.gz | tar -xf -
+
+
+Build DSpace in Build Directory
+cd /build/DSpace-dspace-7.4
+sudo mvn -U package
+cd dspace/target/dspace-installer
+sudo ant fresh_install
+
+IF BUILD FAILS HERE, OPEN THE BUILD FAILURE FILE LOCATED IN THE FOLDER YOU SAW THIS FILE AND DO AS IT SAYS
+
+Install Tomcat, set environment variables, and copy dspace webapps to tomcat webapps and solr webapss to solr configsets
+sudo apt-get install tomcat9
+sudo nano /lib/systemd/system/tomcat9.service
+Add under security
+ReadWritePaths=/dspace
+
+sudo cp -R /dspace/webapps/* /var/lib/tomcat9/webapps*
+sudo cp -R /dspace/solr/* /opt/solr-8.11/server/solr/configsets/
+sudo chown -R dspace:dspace /opt/solr-8.11/server/solr/configsets/
+
+sudo nano /etc/profile
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export CATALINA_HOME=/etc/tomcat
+
+systemctl daemon-reload
+sudo systemctl restart tomcat9.service
+
+create Dspace administrator
+sudo /dspace/bin/dspace create-administrator
+phil@dspace
+phil
+dspace
+y
+
+
+
+start DSpace 7.4 backend
+http://localhost:8080/server
+
+
+Change the REST API Server setting
+cd /opt/dspace-7-angular/config
+sudo nano config.prod.yml
+.....................................................................................................................
+COPY AND PAST THE FF. IN THE NEW FILE
+------------------------------------------------------------------------------
+# The "ui" section defines where you want Node.js to run/respond. It often is a>
+# In this example, we are setting up our UI to just use localhost, port 4000.
+# This is a common setup for when you want to use Apache or Nginx to handle HTT>
+ui:
+  ssl: false
+  host: 172.16.130.181
+  port: 4000
+  nameSpace: /
+
+# This example is valid if your Backend is publicly available at https://api.my>
+# The REST settings MUST correspond to the primary/public URL of the backend. U>
+# with the value of "dspace.server.url" in the backend's local.cfg
+rest:
+  ssl: false
+  host: localhost
+  port: 8080
+  nameSpace: /server
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Start yarn
+cd /opt/dspace-7-angular
+yarn start

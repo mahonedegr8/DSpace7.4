@@ -1,0 +1,28 @@
+RESTART POSGRESQL
+------------------------------------------
+sudo /etc/init.d/postgresql restart
+
+
+START SOLR
+---------------------------------
+/opt/solr-8.11/bin/solr start -force
+
+
+RESTART TOMCAT9
+-----------------------------------------
+sudo systemctl restart tomcat9.service
+
+
+backend is ready to start on:
+localhost:8080/server
+
+
+FRONTEND
+-------------------------------------------------
+cd /opt/dspace-7-angular
+yarn start
+
+
+---------------------------------------------------------------------------------------------------
+|  DSPACE IS AVAILABLE ON YOUR DESIGNATED URL|
+---------------------------------------------------------------------------------------------------

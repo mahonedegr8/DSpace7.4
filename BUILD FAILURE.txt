@@ -1,0 +1,11 @@
+What you need to do is to edit the file
+
+sudo nano /dspace/config/local.cfg.EXAMPLE
+change the 
+db.password = with the password you entered twice after the command: createuser -U postgres -d -A -P dspace
+
+
+save the changes to file local.cfg.EXAMPLE and save it as local.cfg, then run the command
+
+sudo ant fresh_install
+again and this will do it.

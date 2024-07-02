@@ -1,0 +1,135 @@
+Open Terminal and Activate Admin mode
+sudo su
+-----------------------------------------------------------------------------------------------------------------------------------
+Udpate and upgrade
+------------------------------------------------------------------------------------
+sudo apt-get update && sudo apt-get upgrade
+----------------------------------------------------------------------------------------------------------------------
+Install Node through MVN (Node Version Manager)
+---------------------------------------------------------------------------------------------------------------------
+Check NVM stable version [https://github.com/creationix/nvm/releases]
+sudo apt-get install curl
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+source ~/.bashrc
+
+nvm list-remote
+----------------------------------------------------------------------------------------------------------------------
+INSTALL NODE FOR LTS
+-----------------------------------------------------------------------------------------------------------------
+nvm install v16.19.0
+-------------------------------------------------------------------------------------------------------------
+INSTALL YARN
+------------------------------------------------------------------------------------------------------------
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+sudo apt update
+npm install --global yarn	or	sudo apt install yarn
+yarn --version
+
+npm install --global pm2
+
+--------------------------------------------------------------------------------------------------------------------
+UPGRADE YARN, IF INSTALLED VERSION IS OLDER THAN 1.x
+----------------------------------------------------------------------------------------------------------------
+curl --compressed -o- -L https://yarnpkg.com/install.sh | bash
+----------------------------------------------------------------
+
+INSTALL DSPACE FRONTEND
+-----------------------------------------------------------------
+cd /opt
+wget -c https://github.com/DSpace/dspace-angular/archive/refs/tags/dspace-7.4.tar.gz
+tar zxvf dspace-7.4.tar.gz
+mv dspace-angular-dspace-7.4 dspace-angular
+-----------------------------------------------------------------------
+BUILD THE FRONTEND DEPENDENCIES
+-----------------------------------------------------------------------
+cd dspace-angular
+yarn install
+
+# NOTE: Some dependencies occasionally get overly strict over exact versions of Node & Yarn.
+# If you are running a supported version of Node & Yarn, but see a message like
+# `The engine "node" is incompatible with this module.`, you can disregard it using this flag:
+yarn install --ignore-engines
+
+yarn build:prod
+
+mkdir /opt/dspace-ui-deploy
+sudo cp -r /opt/dspace-angular/dist /opt/dspace-ui-deploy
+---------------------------------------------------------------------------------------------------------------------------------------------------
+CONFIGURE DSPACE USER AND DIRECTORY
+-------------------------------------------------------------------------------------------------------------------------------------------------
+sudo useradd -m dspace
+sudo passwd dspace
+sudo mkdir /dspace
+sudo chown dspace /dspace
+exit
+
+
+CONFIGURATION
+------------------------------------------------------------------------
+cd /opt/dspace-ui-deploy/
+sudo mkdir config
+sudo cp /opt/dspace-angular/config/config.yml /opt/dspace-ui-deploy/config/config.prod.yml
+ COPY AND PASTE THE FOLLOWING
+ -----------------------------
+ # The "ui" section defines where you want Node.js to run/respond. It often is a *localhost* (non-public) URL, especially if you are using a Proxy.
+# In this example, we are setting up our UI to just use localhost, port 4000.
+# This is a common setup for when you want to use Apache or Nginx to handle HTTPS and proxy requests to Node on port 4000
+ui:
+  ssl: false
+  host: localhost
+  port: 4000
+  nameSpace: /
+ 
+# This example is valid if your Backend is publicly available at https://api.mydspace.edu/server/
+# The REST settings MUST correspond to the primary/public URL of the backend. Usually, this means they must be kept in sync
+# with the value of "dspace.server.url" in the backend's local.cfg
+rest:
+  ssl: true
+  host: api7.dspace.org
+  port: 443
+  nameSpace: /server
+  
+  SAVE AND EXIT
+  COPY THIS FILE INTO dspace-angular
+  sudo cp /opt/dspace-ui-deploy/config/config.prod.yml opt/dspace-angular/config/config.prod.yml
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MOVE THE FRONTEND FILES TO THE OPT DIRECTORY | CHANGE OWNERSHIP | START THE FRONT APP.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+sudo chown dspace:dspace -R /opt/dspace-angular
+cd /opt/dspace-angular
+yarn test:rest
+
+sudo nano /opt/dspace-ui-deploy/dspace-ui.json
+COPY AND PASTE THE FOLLOWING
+{
+    "apps": [
+        {
+           "name": "dspace-ui",
+           "cwd": "/opt/dspace-ui-deploy/",
+           "script": "dist/server/main.js",
+           "instances": "max",
+           "exec_mode": "cluster",
+           "env": {
+              "NODE_ENV": "production"
+           }
+        }
+    ]
+}
+
+-------------------------------------------------------------------------
+START THE APPLICATION USING PM2
+sudo pm2 start dspace-ui.json
+
+# To see the logs, you'd run
+# pm2 logs
+ 
+# To stop it, you'd run
+# pm2 stop dspace-ui.json
+ 
+# If you need to change your PM2 configs, delete the old config and restart
+# pm2 delete dspace-ui.json
+
+TO ADD HTTPS SUPPORT FOLLOW GUIDE ON 
+https://wiki.lyrasis.org/display/DSDOC7x/Installing+DSpace#InstallingDSpace-InstallingtheFrontend(UserInterface)
+

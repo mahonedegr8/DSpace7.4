@@ -52,10 +52,10 @@ Create solr directory in opt and change the directory owner to Dspace user
 sudo mkdir /opt/solr-8.11
 cd /opt/solr-8.11
 sudo chown -R dspace:dspace /opt/solr-8.11
-wget -c https://downloads.apache.org/lucene/solr/8.11.2/solr-8.11.2.tgz
-tar xvf solr-8.11.2.tgz
-cp -rf /opt/solr-8.11/solr-8.11.2/* /opt/solr-8.11/
-rm -rf solr-8.11.2 solr-8.11.2.tgz
+wget -c https://downloads.apache.org/lucene/solr/8.11.2/solr-8.11.3.tgz
+tar xvf solr-8.11.3.tgz
+cp -rf /opt/solr-8.11/solr-8.11.3/* /opt/solr-8.11/
+rm -rf solr-8.11.3 solr-8.11.3.tgz
 /opt/solr-8.11/bin/solr start -force
 /opt/solr-8.11/bin/ solr status
 http://localhost:8983/solr

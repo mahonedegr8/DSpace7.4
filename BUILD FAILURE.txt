@@ -1,6 +1,6 @@
 What you need to do is to edit the file
 
-sudo nano /dspace/config/local.cfg.EXAMPLE
+sudo nano dspace/config/local.cfg.EXAMPLE
 change the 
 db.password = with the password you entered twice after the command: createuser -U postgres -d -A -P dspace
 

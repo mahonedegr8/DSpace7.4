@@ -24,14 +24,14 @@ psql -V psql
 
 Configure Dspace database, pgcrypto extension in PostgreSQL
 sudo su postgres
-cd /etc/postgresql/14/main
+cd /etc/postgresql/16/main
 createuser --username=postgres --no-superuser --pwprompt dspace
 createdb --username=postgres --owner=dspace --encoding=UNICODE -T template0 dspace
 psql --username=postgres dspace -c "CREATE EXTENSION pgcrypto;"
 exit
 
 Allow Dspace on localhost
-sudo nano /etc/postgresql/14/main/pg_hba.conf
+sudo nano /etc/postgresql/16/main/pg_hba.conf
 local all dspace md5
 sudo /etc/init.d/postgresql restart
 
@@ -52,7 +52,7 @@ Create solr directory in opt and change the directory owner to Dspace user
 sudo mkdir /opt/solr-8.11
 cd /opt/solr-8.11
 sudo chown -R dspace:dspace /opt/solr-8.11
-wget -c https://downloads.apache.org/lucene/solr/8.11.2/solr-8.11.3.tgz
+wget -c https://downloads.apache.org/lucene/solr/8.11.3/solr-8.11.3.tgz
 tar xvf solr-8.11.3.tgz
 cp -rf /opt/solr-8.11/solr-8.11.3/* /opt/solr-8.11/
 rm -rf solr-8.11.3 solr-8.11.3.tgz
